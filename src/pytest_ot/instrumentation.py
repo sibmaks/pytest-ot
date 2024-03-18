@@ -20,12 +20,20 @@ from opentelemetry_container_distro import (
 
 from .resource import CodebaseResourceDetector
 
-tracer = trace.get_tracer('pytest-opentelemetry')
+tracer = trace.get_tracer('pytest-ot')
 
 
 class OpenTelemetryPlugin:
     """A pytest plugin which produces OpenTelemetry spans around test sessions and
     individual test runs."""
+
+    def __init__(self):
+        self.trace4test = False
+        self.trace_parent = None
+        self.session_span = None
+        self.has_error = False
+        self._session_name = None
+        self._fixture_teardown_span = None
 
     @property
     def session_name(self):
@@ -61,6 +69,7 @@ class OpenTelemetryPlugin:
 
     def pytest_configure(self, config: Config) -> None:
         self.trace_parent = self.get_trace_parent(config)
+        self.trace4test = config.getoption('--trace-4-test')
 
         # This can't be tested both ways in one process
         if config.getoption('--export-traces'):  # pragma: no cover
@@ -72,6 +81,18 @@ class OpenTelemetryPlugin:
         configurator.configure()
 
     def pytest_sessionstart(self, session: Session) -> None:
+        if self.trace4test is True:
+            return
+
+        self._start_trace()
+
+    def pytest_sessionfinish(self, session: Session) -> None:
+        if self.trace4test is True:
+            return
+
+        self._finish_trace()
+
+    def _start_trace(self) -> None:
         self.session_span = tracer.start_span(
             self.session_name,
             context=self.trace_parent,
@@ -81,7 +102,7 @@ class OpenTelemetryPlugin:
         )
         self.has_error = False
 
-    def pytest_sessionfinish(self, session: Session) -> None:
+    def _finish_trace(self) -> None:
         self.session_span.set_status(
             StatusCode.ERROR if self.has_error else StatusCode.OK
         )
@@ -89,7 +110,8 @@ class OpenTelemetryPlugin:
         self.session_span.end()
         self.try_force_flush()
 
-    def _attributes_from_item(self, item: Item) -> Dict[str, Union[str, int]]:
+    @staticmethod
+    def _attributes_from_item(item: Item) -> Dict[str, Union[str, int]]:
         filepath, line_number, _ = item.location
         attributes: Dict[str, Union[str, int]] = {
             SpanAttributes.CODE_FILEPATH: filepath,
@@ -104,25 +126,26 @@ class OpenTelemetryPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
-        context = trace.set_span_in_context(self.session_span)
+        context = self.trace_parent
+        if self.trace4test is False:
+            context = trace.set_span_in_context(self.session_span)
         with tracer.start_as_current_span(
-            item.nodeid,
-            attributes=self._attributes_from_item(item),
-            context=context,
+                item.nodeid,
+                attributes=self._attributes_from_item(item),
+                context=context,
         ):
             yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item: Item) -> Generator[None, None, None]:
         with tracer.start_as_current_span(
-            f'{item.nodeid}::setup',
-            attributes=self._attributes_from_item(item),
+                f'{item.nodeid}::setup',
+                attributes=self._attributes_from_item(item),
         ):
             yield
 
-    def _attributes_from_fixturedef(
-        self, fixturedef: FixtureDef
-    ) -> Dict[str, Union[str, int]]:
+    @staticmethod
+    def _attributes_from_fixturedef(fixturedef: FixtureDef) -> Dict[str, Union[str, int]]:
         return {
             SpanAttributes.CODE_FILEPATH: fixturedef.func.__code__.co_filename,
             SpanAttributes.CODE_FUNCTION: fixturedef.argname,
@@ -131,7 +154,8 @@ class OpenTelemetryPlugin:
             "pytest.span_type": "fixture",
         }
 
-    def _name_from_fixturedef(self, fixturedef: FixtureDef, request: FixtureRequest):
+    @staticmethod
+    def _name_from_fixturedef(fixturedef: FixtureDef, request: FixtureRequest) -> str:
         if fixturedef.params and 'request' in fixturedef.argnames:
             try:
                 parameter = str(request.param)
@@ -144,27 +168,27 @@ class OpenTelemetryPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_fixture_setup(
-        self, fixturedef: FixtureDef, request: FixtureRequest
+            self, fixturedef: FixtureDef, request: FixtureRequest
     ) -> Generator[None, None, None]:
         with tracer.start_as_current_span(
-            name=f'{self._name_from_fixturedef(fixturedef, request)} setup',
-            attributes=self._attributes_from_fixturedef(fixturedef),
+                name=f'{self._name_from_fixturedef(fixturedef, request)} setup',
+                attributes=self._attributes_from_fixturedef(fixturedef),
         ):
             yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item: Item) -> Generator[None, None, None]:
         with tracer.start_as_current_span(
-            name=f'{item.nodeid}::call',
-            attributes=self._attributes_from_item(item),
+                name=f'{item.nodeid}::call',
+                attributes=self._attributes_from_item(item),
         ):
             yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:
         with tracer.start_as_current_span(
-            name=f'{item.nodeid}::teardown',
-            attributes=self._attributes_from_item(item),
+                name=f'{item.nodeid}::teardown',
+                attributes=self._attributes_from_item(item),
         ):
             # Since there is no pytest_fixture_teardown hook, we have to be a
             # little clever to capture the spans for each fixture's teardown.
@@ -187,7 +211,7 @@ class OpenTelemetryPlugin:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_fixture_post_finalizer(
-        self, fixturedef: FixtureDef, request: SubRequest
+            self, fixturedef: FixtureDef, request: SubRequest
     ) -> Generator[None, None, None]:
         """When the span for a fixture teardown is created by
         pytest_runtest_teardown or a previous pytest_fixture_post_finalizer, we
@@ -218,9 +242,9 @@ class OpenTelemetryPlugin:
 
     @staticmethod
     def pytest_exception_interact(
-        node: Node,
-        call: CallInfo[Any],
-        report: TestReport,
+            node: Node,
+            call: CallInfo[Any],
+            report: TestReport,
     ) -> None:
         excinfo = call.excinfo
         assert excinfo
@@ -278,8 +302,9 @@ class XdistOpenTelemetryPlugin(OpenTelemetryPlugin):
         )
 
     def pytest_configure_node(self, node: WorkerController) -> None:  # pragma: no cover
-        with trace.use_span(self.session_span, end_on_exit=False):
-            propagate.inject(node.workerinput)
+        if self.trace4test is False:
+            with trace.use_span(self.session_span, end_on_exit=False):
+                propagate.inject(node.workerinput)
 
     def pytest_xdist_node_collection_finished(node, ids):  # pragma: no cover
         super().try_force_flush()

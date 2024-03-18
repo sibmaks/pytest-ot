@@ -1,4 +1,4 @@
-# pytest-opentelemetry
+# pytest-ot
 
 Instruments your pytest runs, exporting the spans and timing via OpenTelemetry.
 
@@ -12,25 +12,25 @@ test bottlenecks that might be slowing your entire suite down.
 
 Additionally, `pytest` makes an excellent driver for _integration_ tests that operate
 on fully deployed systems, like your testing/staging environment.  By using
-`pytest-opentelemetry` and configuring the appropriate propagators, you can connect
+`pytest-ot` and configuring the appropriate propagators, you can connect
 traces from your integration test suite to your running system to analyze failures
 more quickly.
 
-Even if you only enable `pytest-opentelemetry` locally for occasional debugging, it
+Even if you only enable `pytest-ot` locally for occasional debugging, it
 can help you understand _exactly_ what is slowing your test suite down.  Did you
 forget to mock that `requests` call?  Didn't realize the test suite was creating
 10,000 example accounts?  Should that database setup fixture be marked
-`scope=module`? These are the kinds of questions `pytest-opentelemetry` can help
+`scope=module`? These are the kinds of questions `pytest-ot` can help
 you answer.
 
-`pytest-opentelemetry` works even better when testing applications and libraries that
+`pytest-ot` works even better when testing applications and libraries that
 are themselves instrumented with OpenTelemetry.  This will give you deeper visibility
 into the layers of your stack, like database queries and network requests.
 
 ## Installation and usage
 
 ```bash
-pip install pytest-opentelemetry
+pip install pytest-ot
 ```
 
 Installing a library that exposes a specific pytest-related entry point is automatically
@@ -58,7 +58,7 @@ pytest --export-traces
 
 Only the OTLP over gRPC exporter is currently supported.
 
-`pytest-opentelemetry` will use the name of the project's directory as the OpenTelemetry
+`pytest-ot` will use the name of the project's directory as the OpenTelemetry
 `service.name`, but it will also respect the standard `OTEL_SERVICE_NAME` and
 `OTEL_RESOURCE_ATTRIBUTES` environment variables.  If you would like to permanently
 specify those for your project, consider using the very helpful
@@ -74,7 +74,7 @@ env = [
 
 If you are using the delightful [`pytest-xdist`](https://pypi.org/project/pytest-xdist/)
 package to spread your tests out over multiple processes or hosts,
-`pytest-opentelemetry` will automatically unite them all under one trace.  If this
+`pytest-ot` will automatically unite them all under one trace.  If this
 `pytest` run is part of a larger trace, you can provide a `--trace-parent` argument to
 nest this run under that parent:
 

@@ -1,3 +1,24 @@
+[project]
+name = "pytest-ot"
+version = "0.0.3"
+authors = [
+  { name="Chris Guidry", email="chris@theguidrys.us" },
+  { name="Drobyshev Maksim", email="sibmaks@vk.com" },
+]
+description = "A pytest plugin for instrumenting test runs via OpenTelemetry"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Framework :: Pytest",
+]
+
+[project.urls]
+Homepage = "https://github.com/sibmaks/pytest-ot"
+Issues = "https://github.com/sibmaks/pytest-ot/issues"
+
 [build-system]
 requires = ["setuptools>=62", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
@@ -10,8 +31,8 @@ target-version = ['py39']
 
 [tool.coverage.report]
 omit = [
-    "src/pytest_opentelemetry/__init__.py",
-    "src/pytest_opentelemetry/plugin.py"
+    "src/pytest_ot/__init__.py",
+    "src/pytest_ot/plugin.py"
 ]
 
 [tool.isort]

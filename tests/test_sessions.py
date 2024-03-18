@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 from _pytest.pytester import Pytester
 from opentelemetry import trace
 
-from pytest_opentelemetry.instrumentation import (
+from pytest_ot.instrumentation import (
     OpenTelemetryPlugin,
     XdistOpenTelemetryPlugin,
 )

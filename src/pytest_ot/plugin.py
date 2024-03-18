@@ -3,7 +3,7 @@ from _pytest.config.argparsing import Parser
 
 
 def pytest_addoption(parser: Parser) -> None:
-    group = parser.getgroup('pytest-opentelemetry', 'OpenTelemetry for test runs')
+    group = parser.getgroup('pytest-ot', 'OpenTelemetry for test runs')
     group.addoption(
         "--export-traces",
         action="store_true",
@@ -12,6 +12,14 @@ def pytest_addoption(parser: Parser) -> None:
             'Enables exporting of OpenTelemetry traces via OTLP, by default to '
             'http://localhost:4317.  Set the OTEL_EXPORTER_OTLP_ENDPOINT environment '
             'variable to specify an alternative endpoint.'
+        ),
+    )
+    group.addoption(
+        "--trace-4-test",
+        action="store_true",
+        default=False,
+        help=(
+            'Enables trace tests as separate traces'
         ),
     )
     group.addoption(
@@ -29,13 +37,15 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    # pylint: disable=import-outside-toplevel
-    from pytest_opentelemetry.instrumentation import (
-        OpenTelemetryPlugin,
-        XdistOpenTelemetryPlugin,
-    )
-
     if config.pluginmanager.has_plugin("xdist"):
+        # pylint: disable=import-outside-toplevel
+        from pytest_ot.instrumentation import (
+            XdistOpenTelemetryPlugin,
+        )
         config.pluginmanager.register(XdistOpenTelemetryPlugin())
     else:
+        # pylint: disable=import-outside-toplevel
+        from pytest_ot.instrumentation import (
+            OpenTelemetryPlugin,
+        )
         config.pluginmanager.register(OpenTelemetryPlugin())
