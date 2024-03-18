@@ -6,7 +6,7 @@ from typing import Generator
 import pytest
 from opentelemetry.sdk.resources import Resource
 
-from pytest_opentelemetry.resource import CodebaseResourceDetector
+from pytest_ot.resource import CodebaseResourceDetector
 
 
 @pytest.fixture
