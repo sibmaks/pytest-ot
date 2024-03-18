@@ -11,6 +11,7 @@ from _pytest.runner import CallInfo
 from opentelemetry import propagate, trace
 from opentelemetry.context.context import Context
 from opentelemetry.sdk.resources import OTELResourceDetector
+from opentelemetry.trace import Span
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry_container_distro import (
@@ -24,16 +25,12 @@ tracer = trace.get_tracer('pytest-ot')
 
 
 class OpenTelemetryPlugin:
+    trace4test: bool = False
+    trace_parent: Optional[Context]
+    session_span: Optional[Span]
+    has_error: Optional[bool]
     """A pytest plugin which produces OpenTelemetry spans around test sessions and
     individual test runs."""
-
-    def __init__(self):
-        self.trace4test = False
-        self.trace_parent = None
-        self.session_span = None
-        self.has_error = False
-        self._session_name = None
-        self._fixture_teardown_span = None
 
     @property
     def session_name(self):
@@ -84,15 +81,6 @@ class OpenTelemetryPlugin:
         if self.trace4test is True:
             return
 
-        self._start_trace()
-
-    def pytest_sessionfinish(self, session: Session) -> None:
-        if self.trace4test is True:
-            return
-
-        self._finish_trace()
-
-    def _start_trace(self) -> None:
         self.session_span = tracer.start_span(
             self.session_name,
             context=self.trace_parent,
@@ -102,7 +90,10 @@ class OpenTelemetryPlugin:
         )
         self.has_error = False
 
-    def _finish_trace(self) -> None:
+    def pytest_sessionfinish(self, session: Session) -> None:
+        if self.trace4test is True:
+            return
+
         self.session_span.set_status(
             StatusCode.ERROR if self.has_error else StatusCode.OK
         )
