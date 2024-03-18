@@ -120,6 +120,8 @@ class OpenTelemetryPlugin:
         context = self.trace_parent
         if self.trace4test is False:
             context = trace.set_span_in_context(self.session_span)
+        else:
+            self.has_error = False
         with tracer.start_as_current_span(
                 item.nodeid,
                 attributes=self._attributes_from_item(item),

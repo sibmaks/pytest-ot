@@ -1,6 +1,6 @@
 [project]
 name = "pytest-ot"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
   { name="Chris Guidry", email="chris@theguidrys.us" },
   { name="Drobyshev Maksim", email="sibmaks@vk.com" },
