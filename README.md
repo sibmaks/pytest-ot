@@ -82,6 +82,12 @@ nest this run under that parent:
 pytest ... --trace-parent 00-1234567890abcdef1234567890abcdef-fedcba0987654321-01
 ```
 
+### Trace each test separately
+
+To enable separately tests tracing you have to use `--trace-4-test` flag.
+
+In this case each test will be traced as separate trace. Can be useful in case of big amount of tests.
+
 ## Visualizing test traces
 
 One quick way to visualize test traces would be to use an [OpenTelemetry
