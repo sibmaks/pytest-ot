@@ -299,5 +299,5 @@ class XdistOpenTelemetryPlugin(OpenTelemetryPlugin):
             with trace.use_span(self.session_span, end_on_exit=False):
                 propagate.inject(node.workerinput)
 
-    def pytest_xdist_node_collection_finished(node, ids):  # pragma: no cover
+    def pytest_xdist_node_collection_finished(self, ids):  # pragma: no cover
         super().try_force_flush()
