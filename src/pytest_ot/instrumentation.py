@@ -265,6 +265,9 @@ class OpenTelemetryPlugin:
         if report.when != 'call':
             return
 
+        if not hasattr(self, 'has_error'):
+            self.has_error = False
+
         has_error = report.outcome == 'failed'
         status_code = StatusCode.ERROR if has_error else StatusCode.OK
         self.has_error |= has_error
@@ -298,6 +301,8 @@ class XdistOpenTelemetryPlugin(OpenTelemetryPlugin):
         if self.trace4test is False:
             with trace.use_span(self.session_span, end_on_exit=False):
                 propagate.inject(node.workerinput)
+        elif not hasattr(self, 'has_error'):
+            self.has_error = False
 
     def pytest_xdist_node_collection_finished(self, ids):  # pragma: no cover
         super().try_force_flush()
