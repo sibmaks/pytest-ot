@@ -1,13 +1,13 @@
 [project]
 name = "pytest-ot"
-version = "0.0.7"
+version = "0.0.8"
 authors = [
   { name="Chris Guidry", email="chris@theguidrys.us" },
   { name="Drobyshev Maksim", email="sibmaks@vk.com" },
 ]
 description = "A pytest plugin for instrumenting test runs via OpenTelemetry"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,14 +20,14 @@ Homepage = "https://github.com/sibmaks/pytest-ot"
 Issues = "https://github.com/sibmaks/pytest-ot/issues"
 
 [build-system]
-requires = ["setuptools>=62", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=75", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 
 [tool.black]
 skip-string-normalization = true
-target-version = ['py39']
+target-version = ['py312']
 
 [tool.coverage.report]
 omit = [
