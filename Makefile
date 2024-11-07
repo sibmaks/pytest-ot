@@ -31,11 +31,8 @@ endif
 	pip-compile --upgrade --output-file $@.next $<
 	mv $@.next $@
 
-.git/hooks/pre-commit: .bookkeeping/development.txt
-	python -m pre-commit install
-
 .PHONY: install
-install: .bookkeeping/installed .git/hooks/pre-commit
+install: .bookkeeping/installed
 
 .PHONY: clean
 clean:
