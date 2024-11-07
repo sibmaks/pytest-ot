@@ -27,6 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pip-tools
         pip install pre-commit
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
         make install
     - name: Run pre-commit
       run: |
