@@ -32,7 +32,7 @@ endif
 	mv $@.next $@
 
 .git/hooks/pre-commit: .bookkeeping/development.txt
-	./venv/bin/python -m pre_commit install
+	pre-commit install
 
 .PHONY: install
 install: .bookkeeping/installed .git/hooks/pre-commit
